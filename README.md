@@ -1,13 +1,16 @@
 # web-scraper 🕷️
 
-通用网页抓取工具 — Playwright + Stealth + Readability。
+通用网页抓取工具 — 基于 **Crawl4AI** (58K+ ⭐)。
 
-反检测 + 智能正文提取，覆盖所有需要浏览器渲染的抓取场景：新闻、研报、论坛、产品页、金融数据、文档站。
+反检测 + 智能去噪 + 多格式输出，覆盖所有需要浏览器渲染的抓取场景。不造轮子，集成成熟项目。
 
 ## 安装
 
 ```bash
-pip3 install playwright playwright-stealth markdownify readability-lxml
+# 需要 Python 3.12+
+python3.12 -m venv .venv
+source .venv/bin/activate
+pip install crawl4ai
 python3 -m playwright install chromium
 ```
 
@@ -54,7 +57,9 @@ python3 scrape.py "https://example.com" --cookie cookies.json
 | `--wait SEC` | 3 | 页面加载后额外等待 |
 | `--selector CSS` | - | 只抓匹配的元素 |
 | `--format FMT` | markdown | markdown / html / text / screenshot |
-| `--raw` | - | 跳过 Readability 提取 |
+| `--format fit` | - | Crawl4AI 智能去噪 markdown |
+| `--stealth/--no-stealth` | stealth on | 反检测模式 |
+| `--verbose` | - | 显示 Crawl4AI 日志 |
 | `--scroll` | - | 自动滚动到底部 |
 | `--headed` | - | 显示浏览器（调试） |
 | `--cookie FILE` | - | Cookie JSON 文件 |
@@ -63,16 +68,13 @@ python3 scrape.py "https://example.com" --cookie cookies.json
 | `--timeout SEC` | 30 | 页面加载超时 |
 | `-o FILE` | stdout | 输出文件 |
 
-## 反检测
+## 核心能力（来自 Crawl4AI）
 
-内置 `playwright-stealth`：
-- 隐藏 `navigator.webdriver`
-- 伪装 Chrome 运行时
-- 模拟真实 UA / viewport / timezone
-
-## 正文提取
-
-默认使用 Mozilla Readability 算法（Firefox 阅读模式同款），自动去除导航、广告、侧边栏，只保留正文。用 `--raw` 跳过。
+- **反检测**：enable_stealth + patchright，指纹轮换，UA 随机化
+- **智能去噪**：fit markdown 算法，自动去导航/广告/脚本
+- **异步引擎**：底层异步，性能好
+- **深度爬取**：支持递归发现子页面（CLI 暂未暴露，可通过 Python API 使用）
+- **多格式**：markdown / fit / html / text / screenshot
 
 ## 文档
 

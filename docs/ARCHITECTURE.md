@@ -13,36 +13,38 @@ _卷卷的通用网页抓取工具，能力覆盖所有需要浏览器渲染的�
 
 | 层 | 技术 | 说明 |
 |---|---|---|
-| 浏览器引擎 | Playwright (Chromium) | 支持 JS 渲染、SPA |
-| 反检测 | playwright-stealth 2.x | 指纹伪装、webdriver 隐藏 |
-| 正文提取 | readability-lxml (Mozilla Readability) | 去导航/广告/脚本，提取正文 |
-| HTML→Markdown | markdownify | 结构化输出 |
-| 语言 | Python 3.x | Playwright Python 生态更成熟 |
+| 核心引擎 | **Crawl4AI 0.8.x** (58K+ ⭐) | 异步、LLM-ready、反检测、fit markdown |
+| 浏览器 | Playwright (Chromium) via Crawl4AI | JS 渲染、SPA 支持 |
+| 反检测 | Crawl4AI enable_stealth + patchright | 指纹轮换、UA 随机化 |
+| 内容提取 | Crawl4AI markdown generator | raw markdown + fit markdown（智能去噪） |
+| 封装层 | scrape.py（CLI 薄封装） | 保持简单 CLI 接口 |
+| 语言 | Python 3.12+ | venv 隔离 |
 
 ## 架构概览
 
 ```
-URL → Playwright (Stealth) → 原始 HTML
-                                ↓
-                    Readability 正文提取（可 --raw 跳过）
-                                ↓
-                    格式化（markdown / text / html / screenshot）
-                                ↓
-                    clean_markdown（过滤 CSS/JS 残留）
-                                ↓
-                    截断（--max-chars）→ 输出
+scrape.py (CLI 入口)
+    ↓
+Crawl4AI AsyncWebCrawler
+    ├── BrowserConfig（代理/stealth/headed）
+    └── CrawlerRunConfig（超时/选择器/JS/滚动）
+          ↓
+    Playwright Chromium（反检测注入）
+          ↓
+    页面渲染 → HTML → Markdown Generator
+          ↓
+    raw_markdown / fit_markdown / html / screenshot
+          ↓
+    截断（--max-chars）→ 输出
 ```
 
-## 核心流程
+## 设计原则
 
-1. **启动浏览器**：Chromium headless，可选代理（默认 Clash 7897）
-2. **反检测注入**：Stealth.apply_stealth_sync() — 在每个 page 上注入
-3. **导航**：networkidle 优先，超时降级 domcontentloaded
-4. **可选操作**：等待（--wait）、滚动（--scroll）、执行 JS（--js）、Cookie 注入
-5. **内容获取**：--selector 指定元素 或 全页 page.content()
-6. **正文提取**：Readability 算法去噪（除非 --raw / --selector）
-7. **格式化**：markdown / text（strip img）/ html / screenshot
-8. **后处理**：clean_markdown 过滤残留 + max-chars 截断
+**不造轮子，集成成熟项目，在上面优化。**
+
+- Crawl4AI 做重活（浏览器管理、反检测、内容提取）
+- scrape.py 做薄封装（CLI 接口 + 我们的默认值）
+- 后续优化聚焦在：站点适配、输出质量、与其他工具集成
 
 ## 代理策略
 
@@ -61,11 +63,9 @@ URL → Playwright (Stealth) → 原始 HTML
 
 ## 已知限制
 
-1. 单进程单页，无并发队列
-2. 无登录态管理（仅 cookie 文件导入）
-3. Cloudflare Turnstile / hCaptcha 无法自动绕过
-4. 重度 SPA（无 SSR）数据可能不完整
-5. clean_markdown 启发式规则，偶有误判
+1. Cloudflare Turnstile / hCaptcha 无法自动绕过（Bloomberg / Investing.com）
+2. Reddit 需登录态
+3. 部分重度 SPA 可能需 --scroll + --wait 配合
 
 ## 演进方向
 
