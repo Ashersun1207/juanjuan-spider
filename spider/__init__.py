@@ -10,4 +10,4 @@ from spider.core.result import CrawlResult
 from spider.main import crawl
 
 __all__ = ["crawl", "CrawlResult"]
-__version__ = "0.4.0"
+__version__ = "0.5.0"

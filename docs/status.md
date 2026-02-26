@@ -4,7 +4,7 @@
 
 ## 版本
 
-**v0.4.1** (2026-02-26)
+**v0.5** (2026-02-26)
 
 ## 目录结构（当前）
 
@@ -18,6 +18,7 @@ juanjuan-spider/
 │   ├── main.py            # crawl() 核心函数（串联 Router→Engine→Adapter→Storage）
 │   ├── core/
 │   │   ├── engine.py      # BaseEngine 抽象基类 + FetchConfig
+│   │   ├── extractor.py   # ContentExtractor — trafilatura 正文提取 + 质量择优 (v0.5)
 │   │   ├── result.py      # CrawlResult Pydantic 模型（统一输出）
 │   │   └── router.py      # URL → (Engine, Adapter) 路由
 │   ├── engines/
@@ -25,7 +26,10 @@ juanjuan-spider/
 │   │   └── http_engine.py     # httpx 轻量引擎（静态页面）
 │   ├── adapters/
 │   │   ├── default.py     # DefaultAdapter 基类（可子类化定制站点）
-│   │   └── news.py        # BBC / CNBC / Reuters / 金十 适配器
+│   │   ├── news.py        # BBC / CNBC / Reuters / 金十
+│   │   ├── tech.py        # TechCrunch / The Verge / Wikipedia / HN
+│   │   ├── finance.py     # Investing / Yahoo Finance / Bloomberg / WSJ / FT / Myfxbook
+│   │   └── social.py      # Reddit / X / Medium / YouTube
 │   ├── storage/
 │   │   └── sqlite.py      # SQLite 元数据 + pages/ 文件双写存储
 │   ├── mcp/
@@ -33,12 +37,13 @@ juanjuan-spider/
 │   │   └── __main__.py    # python3 -m spider.mcp 启动
 │   └── infra/
 │       └── config.py      # SpiderConfig (pydantic-settings，SPIDER_ 前缀)
-├── tests/                 # 48 tests，全绿
+├── tests/                 # 58 tests，全绿
 │   ├── test_result.py     # CrawlResult 模型（10 tests）
 │   ├── test_router.py     # Router 路由逻辑（10 tests）
 │   ├── test_storage.py    # SQLite CRUD + 缓存（16 tests）
 │   ├── test_config.py     # 配置加载（5 tests）
 │   ├── test_adapter.py    # 适配器（4 tests）
+│   ├── test_extractor.py  # ContentExtractor 提取+质量评分（10 tests）(v0.5)
 │   └── test_mcp.py        # MCP Server（3 tests）
 ├── storage/               # 运行时数据（gitignore）
 │   ├── spider.db          # SQLite 元数据
@@ -72,6 +77,10 @@ juanjuan-spider/
 | MCP Server | v0.4.1 | 4 tools（scrape/batch/query/screenshot），stdio 模式 |
 | Crawl4AI 去噪 | v0.4.1 | excluded_tags/selector 过滤导航/页脚/广告 |
 | 新闻适配器 | v0.4.1 | BBC(-56%) / CNBC(-53%) / Reuters / 金十 |
+| 科技/金融/社交适配器 | v0.4.1 | TechCrunch/Verge/Wikipedia/HN + Investing/Yahoo/Bloomberg/WSJ/FT + Reddit/X/Medium/YouTube |
+| **trafilatura 提取层** | **v0.5** | **ContentExtractor — 正文提取+质量评分择优，自动补充元数据** |
+| **fit_markdown 修复** | **v0.5** | **adapter 不再覆盖 fit_markdown，保留引擎 Readability 结果** |
+| **excluded_selector 补全** | **v0.5** | **新增侧边栏/社交/推荐/弹窗/广告等 10+ 选择器** |
 
 ## 进行中
 
@@ -101,17 +110,18 @@ _无_
 
 | 站点 | 引擎 | 状态 | 备注 |
 |---|---|---|---|
-| HN | HTTP | ✅ | 自动路由静态引擎，1.6s |
-| arXiv | HTTP | ✅ | 静态引擎，0.8s |
-| BBC Business | Crawl4AI | ✅ | 适配器去噪，30K→13K(-56%)，7.8s |
-| CNBC Economy | Crawl4AI | ✅ | 适配器去噪，24K→11K(-53%)，6.4s |
+| **BBC 文章页** | Crawl4AI | ✅ | trafilatura 提取纯正文，raw 3.6K → fit 2.8K (77%) |
+| **BBC 首页** | Crawl4AI | ✅ | 列表页识别，raw 13K → fit 196 (精准模式) |
+| **arXiv** | HTTP | ✅ | raw 8.5K → fit 2.3K，摘要+标题 |
+| **PG Essay** | HTTP | ✅ | raw 70K → fit 67K (96%)，纯文章近乎全保留 |
+| **Wikipedia** | Crawl4AI | ✅ | raw 485K → fit 294K，去掉 40% 噪音 |
+| HN | HTTP | ⚠️ | table 布局，markdownify+trafilatura 都提取困难，需 API |
 | 知乎 | Crawl4AI | ⚠️ | 引擎路由正确，需登录态 |
-| GitHub | Crawl4AI | ⚠️ | SPA，从 STATIC_SAFE 移除，走浏览器 |
+| GitHub | Crawl4AI | ⚠️ | SPA，从 STATIC_SAFE 移除 |
 | Myfxbook | Crawl4AI | ✅ | v0.3 已测 |
-| Yahoo Japan News | Crawl4AI | ✅ | v0.3 已测 |
 | Bloomberg | Crawl4AI | ❌ | Cloudflare 拦截 |
 | Reddit | Crawl4AI | ❌ | 需登录态 |
-| Reuters | Crawl4AI | ⚠️ | 有适配器，待实测 |
+| Reuters | Crawl4AI | ❌ | Cloudflare 拦截 |
 
 ## 扩展指南
 

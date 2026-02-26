@@ -108,6 +108,32 @@
 - 复用引擎和存储实例，不重复初始化
 **影响**：新增 spider/mcp/，启动 `python3 -m spider.mcp.server`
 
+## D11: trafilatura 内容提取层（2026-02-26）
+
+**背景**：adapter 只做 regex 删噪音，信噪比仍然低；HTTP 引擎没有 fit_markdown
+**决策**：集成 trafilatura 2.0.0 作为 Engine→Adapter 之间的提取层
+**对比**：
+
+| 维度 | trafilatura | readability-lxml | 手写 regex |
+|---|---|---|---|
+| F-Score (750文档) | **0.914** | 0.801 | ~0.5 |
+| 元数据提取 | ✅ | ❌ | ❌ |
+| 维护 | 活跃 (ACL 2021) | 低频 | 自维护 |
+
+**理由**：
+- 学术评测冠军，精度+召回全面领先
+- 自带元数据提取（author/date/sitename），省大量 adapter 工作
+- 质量评分择优：trafilatura vs 引擎 fit_markdown，取更好的
+- HTTP 引擎的 fit_markdown 空白问题一并解决
+**影响**：新增 spider/core/extractor.py，main.py +3行集成，+1 依赖
+
+## D12: adapter 不再覆盖 fit_markdown（2026-02-26）
+
+**背景**：所有 adapter 的 transform() 都执行 `fit_markdown=md`，把 Crawl4AI 自带的 Readability 结果覆盖了
+**决策**：adapter 只清洗 markdown（raw），不碰 fit_markdown
+**理由**：这是 bug，不是 feature。fit_markdown 应该由引擎或 Extractor 产生
+**影响**：4 个 adapter 文件修改
+
 ---
 
 _Last updated: 2026-02-26_

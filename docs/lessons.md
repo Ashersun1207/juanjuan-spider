@@ -39,6 +39,19 @@
 **效果**：BBC -56%、CNBC -53%
 **教训**：通用规则先干掉大部分噪音，适配器只处理站点特异的垃圾
 
+## L7: adapter 不应覆盖 fit_markdown（2026-02-26）
+
+**现象**：所有 adapter 把 fit_markdown 设成清洗后的全文，Crawl4AI Readability 结果被丢弃
+**原因**：v0.4 写 adapter 时没想清楚 fit_markdown 的语义
+**教训**：fit_markdown = 正文提取结果（引擎或 Extractor 产生），adapter 只负责清洗 raw markdown
+
+## L8: 用成熟提取库替代手写 regex（2026-02-26）
+
+**现象**：24 个域名写了 adapter，但都是 regex 删几行，信噪比仍然低
+**方案**：集成 trafilatura（F-Score 0.914），作为通用提取层
+**效果**：BBC 文章页 raw 3.6K → fit 2.8K 纯正文；PG Essay 67K 近乎全保留
+**教训**：正文提取是已解决问题，不要自己造轮子。regex adapter 适合做精调，不适合做主力提取
+
 ---
 
 _Last updated: 2026-02-26_

@@ -40,10 +40,17 @@ _可演进的通用爬虫，支持 MCP 接入，供 Agent / AI 工具调用。_
 │   └──────────────────┬──────────────────────────┘ │
 │                      │                             │
 │   ┌──────────────────▼──────────────────────────┐ │
+│   │       Extractor (内容提取层) — v0.5 新增      │ │
+│   │                                              │ │
+│   │  trafilatura 正文提取 + 质量评分择优          │ │
+│   │  自动提取元数据 (author/date/sitename)        │ │
+│   └──────────────────┬──────────────────────────┘ │
+│                      │                             │
+│   ┌──────────────────▼──────────────────────────┐ │
 │   │         Adapter (站点适配器)                  │ │
 │   │                                              │ │
 │   │  通用默认 │ 知乎 │ 小红书 │ 微博 │ Reddit… │ │
-│   │  (每个适配器定义: 选择器/等待策略/登录/签名)  │ │
+│   │  (每个适配器做站点特有精调，不负责正文提取)   │ │
 │   └──────────────────┬──────────────────────────┘ │
 │                      │                             │
 │   ┌──────────────────▼──────────────────────────┐ │
@@ -182,6 +189,7 @@ juanjuan-spider/
 │   ├── core/
 │   │   ├── router.py      # URL → (Engine, Adapter) 路由
 │   │   ├── engine.py      # BaseEngine 抽象基类 + FetchConfig
+│   │   ├── extractor.py   # ContentExtractor — trafilatura 正文提取 + 质量择优 (v0.5)
 │   │   └── result.py      # CrawlResult Pydantic 数据模型
 │   ├── engines/
 │   │   ├── crawl4ai_engine.py  # Crawl4AI 浏览器渲染引擎（主力）
@@ -221,8 +229,8 @@ juanjuan-spider/
 | 阶段 | 做什么 | 状态 |
 |---|---|---|
 | **v0.1-v0.3** | Playwright → Crawl4AI 引擎 + CLI | ✅ 完成 |
-| **v0.4（当前）** | 分层重构 + SQLite 存储 + MCP Server + 适配器 + 去噪 | ✅ 完成 |
-| **v0.5** | 登录态管理 + Jina fallback + 更多适配器 | 待做 |
+| **v0.4** | 分层重构 + SQLite 存储 + MCP Server + 适配器 + 去噪 | ✅ 完成 |
+| **v0.5（当前）** | trafilatura 提取层 + 24站适配器 + 质量评分择优 + 58 tests | ✅ 完成 |
 | **v0.6** | 代理管理 + 批量/深度爬取 | 待做 |
 | **v1.0** | 稳定 API + 完整测试 + OpenClaw Skill | 待做 |
 
@@ -237,4 +245,4 @@ juanjuan-spider/
 
 ---
 
-_Last updated: 2026-02-26_
+_Last updated: 2026-02-26 (v0.5 — trafilatura 提取层)_
