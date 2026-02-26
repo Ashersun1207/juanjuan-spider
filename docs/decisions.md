@@ -67,6 +67,47 @@
 **理由**：隔离干净，不影响其他工具
 **影响**：运行需先 `source .venv/bin/activate`
 
+## D7: 分层包结构 + 双引擎路由（2026-02-26）
+
+**背景**：scrape.py 单文件已 150 行，需加存储和 MCP，继续塞不下
+**决策**：拆成 spider/ 包，5 层（core/engines/adapters/storage/infra）+ 双引擎自动路由
+**理由**：
+- 参考 Crawlee 架构（ContextPipeline + Router + Session）大幅简化
+- Router 按域名自动选 Crawl4AI（JS渲染）或 HTTP（静态页）
+- 每层职责单一，新增引擎/适配器不改核心
+**影响**：代码量从 150 行→1998 行（含测试），但每个文件 ≤200 行
+
+## D8: SQLite + 文件双写存储（2026-02-26）
+
+**背景**：抓完 stdout 输出，用完即弃，无法查历史/去重/缓存
+**决策**：SQLite 存元数据（url/domain/hash/时间），pages/ 目录存 markdown 文件
+**理由**：
+- SQLite 查询快（按域名/时间/关键词），单文件免部署
+- markdown 文件人类可读，Agent 可直接 read
+- content_hash 去重：同 URL 内容没变不重复存
+- 不用 ORM，直接 sqlite3 模块，50 行搞定
+**影响**：storage/ 目录 gitignore，不提交爬取数据
+
+## D9: Crawl4AI 引擎级去噪 + 站点适配器（2026-02-26）
+
+**背景**：BBC 30K 字符中 60%+ 是导航菜单，正文被淹没
+**决策**：两层去噪——引擎级（excluded_tags/selector）+ 站点适配器（transform）
+**理由**：
+- 引擎级：通用规则（去 nav/footer/header/aside/广告），所有站点受益
+- 适配器：站点专用清洗（BBC 去重复导航链接、CNBC 去 Skip Navigation）
+- 实测 BBC -56%、CNBC -53%，正文可读性大幅提升
+**影响**：新增 adapters/news.py，Router 自动注册
+
+## D10: MCP Server — 4 tools stdio 模式（2026-02-26）
+
+**背景**：Spider 只能 CLI 用，Agent 无法调用
+**决策**：MCP Server 暴露 4 个 tools（scrape/batch/query/screenshot），stdio 模式
+**理由**：
+- stdio 最简单，Claude Desktop / OpenClaw 直接配就能用
+- 4 个 tools 覆盖：单抓、批量、查历史、截图
+- 复用引擎和存储实例，不重复初始化
+**影响**：新增 spider/mcp/，启动 `python3 -m spider.mcp.server`
+
 ---
 
 _Last updated: 2026-02-26_

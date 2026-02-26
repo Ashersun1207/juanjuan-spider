@@ -4,7 +4,7 @@
 
 ## 版本
 
-**v0.4.0** (2026-02-26)
+**v0.4.1** (2026-02-26)
 
 ## 目录结构（当前）
 
@@ -24,17 +24,22 @@ juanjuan-spider/
 │   │   ├── crawl4ai_engine.py  # Crawl4AI 浏览器引擎（主力）
 │   │   └── http_engine.py     # httpx 轻量引擎（静态页面）
 │   ├── adapters/
-│   │   └── default.py     # DefaultAdapter 基类（可子类化定制站点）
+│   │   ├── default.py     # DefaultAdapter 基类（可子类化定制站点）
+│   │   └── news.py        # BBC / CNBC / Reuters / 金十 适配器
 │   ├── storage/
 │   │   └── sqlite.py      # SQLite 元数据 + pages/ 文件双写存储
+│   ├── mcp/
+│   │   ├── server.py      # MCP Server（4 tools: scrape/batch/query/screenshot）
+│   │   └── __main__.py    # python3 -m spider.mcp 启动
 │   └── infra/
 │       └── config.py      # SpiderConfig (pydantic-settings，SPIDER_ 前缀)
-├── tests/                 # 43 tests，全绿
+├── tests/                 # 48 tests，全绿
 │   ├── test_result.py     # CrawlResult 模型（10 tests）
-│   ├── test_router.py     # Router 路由逻辑（9 tests）
+│   ├── test_router.py     # Router 路由逻辑（10 tests）
 │   ├── test_storage.py    # SQLite CRUD + 缓存（16 tests）
 │   ├── test_config.py     # 配置加载（5 tests）
-│   └── test_adapter.py    # 适配器（4 tests）
+│   ├── test_adapter.py    # 适配器（4 tests）
+│   └── test_mcp.py        # MCP Server（3 tests）
 ├── storage/               # 运行时数据（gitignore）
 │   ├── spider.db          # SQLite 元数据
 │   └── pages/YYYY-MM/     # markdown 文件（按月分目录）
@@ -64,6 +69,9 @@ juanjuan-spider/
 | 43 单元测试 | v0.4 | 全绿，覆盖4个核心模块 |
 | 反检测/代理/Cookie | v0.3 | Crawl4AI 引擎支持 |
 | Playwright + Stealth | v0.3 | enable_stealth=True |
+| MCP Server | v0.4.1 | 4 tools（scrape/batch/query/screenshot），stdio 模式 |
+| Crawl4AI 去噪 | v0.4.1 | excluded_tags/selector 过滤导航/页脚/广告 |
+| 新闻适配器 | v0.4.1 | BBC(-56%) / CNBC(-53%) / Reuters / 金十 |
 
 ## 进行中
 
@@ -72,9 +80,10 @@ _无_
 ## 待做（按优先级）
 
 ### P1
-- [ ] MCP Server（`server.py` + `spider/mcp/` — 暴露 5 个 tools）
+- [x] ~~MCP Server（4 tools: scrape/batch/query/screenshot）~~ ✅
+- [x] ~~新闻适配器（BBC/CNBC/Reuters/金十）~~ ✅
 - [ ] Jina Reader L1 fallback（spider/engines/jina_engine.py）
-- [ ] 知乎 / 小红书 适配器（spider/adapters/zhihu.py 等）
+- [ ] 知乎 / 小红书 适配器（需登录态管理）
 
 ### P2
 - [ ] 登录态管理（SessionManager — Playwright context 持久化）
@@ -92,12 +101,17 @@ _无_
 
 | 站点 | 引擎 | 状态 | 备注 |
 |---|---|---|---|
-| HN | HTTP | ✅ | 自动路由静态引擎，1.7s |
-| 知乎 | Crawl4AI | ⚠️ | 引擎路由正确，但需登录态才能看内容 |
+| HN | HTTP | ✅ | 自动路由静态引擎，1.6s |
+| arXiv | HTTP | ✅ | 静态引擎，0.8s |
+| BBC Business | Crawl4AI | ✅ | 适配器去噪，30K→13K(-56%)，7.8s |
+| CNBC Economy | Crawl4AI | ✅ | 适配器去噪，24K→11K(-53%)，6.4s |
+| 知乎 | Crawl4AI | ⚠️ | 引擎路由正确，需登录态 |
+| GitHub | Crawl4AI | ⚠️ | SPA，从 STATIC_SAFE 移除，走浏览器 |
 | Myfxbook | Crawl4AI | ✅ | v0.3 已测 |
 | Yahoo Japan News | Crawl4AI | ✅ | v0.3 已测 |
 | Bloomberg | Crawl4AI | ❌ | Cloudflare 拦截 |
 | Reddit | Crawl4AI | ❌ | 需登录态 |
+| Reuters | Crawl4AI | ⚠️ | 有适配器，待实测 |
 
 ## 扩展指南
 
