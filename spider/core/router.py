@@ -25,17 +25,18 @@ class Router:
 
     # 已知需要浏览器渲染的域名（持续积累）
     BROWSER_REQUIRED: set[str] = {
-        "zhihu.com",
-        "xiaohongshu.com",
-        "weibo.com",
-        "reddit.com",
-        "bloomberg.com",
-        "investing.com",
-        "jin10.com",
-        "bbc.com",
-        "bbc.co.uk",
-        "cnbc.com",
-        "reuters.com",
+        # 社交
+        "zhihu.com", "xiaohongshu.com", "weibo.com",
+        "reddit.com", "x.com", "twitter.com",
+        "medium.com", "youtube.com",
+        # 新闻
+        "bbc.com", "bbc.co.uk", "cnbc.com", "reuters.com",
+        # 金融
+        "bloomberg.com", "investing.com", "jin10.com",
+        "finance.yahoo.com", "myfxbook.com",
+        "wsj.com", "ft.com",
+        # 科技
+        "techcrunch.com", "theverge.com",
     }
 
     # 已知纯静态、不需要浏览器的域名
@@ -44,7 +45,11 @@ class Router:
         "raw.githubusercontent.com",
         "arxiv.org",
         "docs.python.org",
-        "en.wikipedia.org",
+    }
+
+    # 这些站点通过代理会被封，需要直连
+    NO_PROXY: set[str] = {
+        "wikipedia.org",
     }
 
     def __init__(
@@ -109,5 +114,13 @@ class Router:
         """判断域名是否可以用纯 HTTP 抓取。"""
         for safe in self.STATIC_SAFE:
             if domain == safe or domain.endswith("." + safe):
+                return True
+        return False
+
+    def needs_direct(self, url: str) -> bool:
+        """判断 URL 是否需要直连（代理会被封）。"""
+        domain = self._extract_domain(url)
+        for no_proxy in self.NO_PROXY:
+            if domain == no_proxy or domain.endswith("." + no_proxy):
                 return True
         return False

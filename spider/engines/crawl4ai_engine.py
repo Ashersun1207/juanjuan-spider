@@ -57,11 +57,10 @@ class Crawl4AIEngine(BaseEngine):
             # 去噪：排除导航、页脚、侧边栏等非正文元素
             "excluded_tags": ["nav", "footer", "header", "aside", "noscript"],
             "excluded_selector": ",".join([
-                "nav", "footer", "header", "aside",
                 "[role='navigation']", "[role='banner']", "[role='contentinfo']",
-                ".nav", ".navbar", ".menu", ".sidebar", ".footer",
-                ".cookie-banner", ".ad", ".advertisement",
-                "#cookie-consent", "#nav", "#footer", "#sidebar",
+                ".navbar", ".menu-bar", ".site-footer", ".cookie-banner",
+                ".advertisement", "#cookie-consent", "#cookie-banner",
+                "[class*='cookie']", "[id*='cookie']",
             ]),
             "remove_overlay_elements": True,
             "exclude_external_images": True,
@@ -132,14 +131,14 @@ class Crawl4AIEngine(BaseEngine):
 
         return CrawlResult(
             url=url,
-            title=result.metadata.get("title", "") if result.metadata else "",
+            title=(result.metadata.get("title") or "") if result.metadata else "",
             markdown=raw_md,
             fit_markdown=fit_md,
             html=result.html or "",
             screenshot=screenshot_bytes,
             links=links,
             engine=self.name,
-            status="success" if raw_md else "partial",
+            status="success" if (raw_md or fit_md) else "partial",
             duration_ms=duration_ms,
         )
 

@@ -73,12 +73,33 @@ async def crawl(
 
     # 注册站点适配器
     from spider.adapters.news import BBCAdapter, CNBCAdapter, ReutersAdapter, Jin10Adapter
-    for adapter_cls in [BBCAdapter, CNBCAdapter, ReutersAdapter, Jin10Adapter]:
-        a = adapter_cls()
+    from spider.adapters.social import RedditAdapter, TwitterAdapter, MediumAdapter, YouTubeAdapter
+    from spider.adapters.finance import (
+        InvestingAdapter, YahooFinanceAdapter, MyfxbookAdapter,
+        BloombergAdapter, WSJAdapter, FTAdapter,
+    )
+    from spider.adapters.tech import TechCrunchAdapter, TheVergeAdapter, WikipediaAdapter, HackerNewsAdapter
+
+    all_adapters = [
+        # 新闻
+        BBCAdapter(), CNBCAdapter(), ReutersAdapter(), Jin10Adapter(),
+        # 社交
+        RedditAdapter(), TwitterAdapter(), MediumAdapter(), YouTubeAdapter(),
+        # 金融
+        InvestingAdapter(), YahooFinanceAdapter(), MyfxbookAdapter(),
+        BloombergAdapter(), WSJAdapter(), FTAdapter(),
+        # 科技/知识
+        TechCrunchAdapter(), TheVergeAdapter(), WikipediaAdapter(), HackerNewsAdapter(),
+    ]
+    for a in all_adapters:
         for domain in a.domains:
             router.register_adapter(domain, a)
 
     engine, adapter = router.route(url)
+
+    # 直连判断（代理会被封的站点）
+    if router.needs_direct(url):
+        fc.proxy = None
 
     # 适配器定制配置
     fc = adapter.customize_config(fc)
