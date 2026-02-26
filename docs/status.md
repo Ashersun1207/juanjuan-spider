@@ -42,12 +42,23 @@ _无_
 - [ ] 页面变更监控（定期 diff）
 - [ ] 集成到 gainlab-mcp 作为 tool
 
-## 已验证站点
+## 已验证站点（2026-02-26 全量测试）
 
-| 站点 | 状态 | 备注 |
-|---|---|---|
-| Myfxbook | ✅ | 核心数据可抓 |
-| MQL5 | ❌ | 代理出口 SSL 被封，非工具问题 |
+| 站点 | 语言 | 状态 | 备注 |
+|---|---|---|---|
+| Myfxbook | EN | ✅ | 核心数据可抓 |
+| 知乎 | ZH | ✅ | 正文提取优秀 |
+| Yahoo Japan News | JA | ✅ | 日文正常 |
+| Naver News | KO | ✅ | 韩文正常 |
+| Al Jazeera | AR | ✅ | 阿拉伯文正常 |
+| Wikipedia (FR) | FR | ✅ | 法文 + 链接保留 |
+| 金十数据 | ZH | ⚠️ | 部分内容（SPA 重度渲染，需 --scroll） |
+| Spiegel.de | DE | ⚠️ | Readability 提取到付费墙内容不足 |
+| Investing.com | EN | ⚠️ | Readability 只拿到 disclaimer，正文未提取（SPA） |
+| HN | EN | ❌ | Readability 返回空（列表页非文章结构），--raw 可用 |
+| Bloomberg | EN | ❌ | Cloudflare 反爬拦截 |
+| Reddit | EN | ❌ | 网络安全拦截，需登录态 |
+| MQL5 | EN | ❌ | 代理出口 SSL 被封 |
 
 ## 依赖版本
 
