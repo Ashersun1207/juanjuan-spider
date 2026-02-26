@@ -5,7 +5,6 @@ juanjuan-spider MCP Server 🕷️
 
 启动方式:
   python3 -m spider.mcp.server          # stdio 模式（Claude Desktop / OpenClaw）
-  python3 -m spider.mcp.server --sse    # SSE 模式（HTTP 远程调用）
 
 Tools:
   spider_scrape      — 抓取单个 URL，返回 markdown/html/text
@@ -18,25 +17,20 @@ from __future__ import annotations
 
 import asyncio
 import json
-import sys
+import logging
+import re
 from typing import Any
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from spider.core.engine import FetchConfig
-from spider.core.result import CrawlResult
-from spider.engines.crawl4ai_engine import Crawl4AIEngine
-from spider.engines.http_engine import HttpEngine
-from spider.core.router import Router
 from spider.infra.config import SpiderConfig
 from spider.storage.sqlite import SpiderStorage
 
-# 全局实例（MCP server 生命周期内复用）
+logger = logging.getLogger("spider.mcp")
+
 _config = SpiderConfig()
-_crawl4ai: Crawl4AIEngine | None = None
-_http: HttpEngine | None = None
 _storage: SpiderStorage | None = None
 
 
@@ -45,15 +39,6 @@ def _get_storage() -> SpiderStorage:
     if _storage is None:
         _storage = SpiderStorage(_config.db_path, _config.pages_dir)
     return _storage
-
-
-async def _get_engines() -> tuple[Crawl4AIEngine, HttpEngine]:
-    global _crawl4ai, _http
-    if _crawl4ai is None:
-        _crawl4ai = Crawl4AIEngine()
-    if _http is None:
-        _http = HttpEngine()
-    return _crawl4ai, _http
 
 
 async def _do_scrape(
@@ -65,51 +50,25 @@ async def _do_scrape(
     max_chars: int = 0,
     save: bool = True,
     no_cache: bool = False,
+    screenshot: bool = False,
 ) -> dict[str, Any]:
-    """核心抓取逻辑，供各 tool 复用。"""
-    storage = _get_storage()
+    """核心抓取逻辑 — 调用 main.crawl()，不重复实现管道。"""
+    from spider.core.engine import FetchConfig
+    from spider.main import crawl
 
-    # 缓存检查
-    if save and not no_cache:
-        cached = storage.get_cached(url)
-        if cached and cached.get("file_path"):
-            file_path = _config.storage_dir / cached["file_path"]
-            if file_path.exists():
-                content = file_path.read_text(encoding="utf-8")
-                if max_chars > 0 and len(content) > max_chars:
-                    content = content[:max_chars] + f"\n\n... (截断于 {max_chars} 字符)"
-                return {
-                    "url": cached["url"],
-                    "title": cached.get("title", ""),
-                    "content": content,
-                    "engine": cached.get("engine", ""),
-                    "status": "cached",
-                    "char_count": len(content),
-                }
-
-    # 构建配置
     fc = FetchConfig(
-        proxy=_config.proxy if _config.use_proxy else None,
-        timeout=_config.timeout,
-        stealth=_config.stealth,
-        headless=_config.headless,
         wait=wait,
         scroll=scroll,
         selector=selector,
     )
 
-    # 路由 + 抓取
-    crawl4ai, http = await _get_engines()
-    router = Router(default_engine=crawl4ai, http_engine=http)
-    engine, adapter = router.route(url)
-    fc = adapter.customize_config(fc)
-
-    result = await engine.fetch(url, fc)
-    result = adapter.transform(result)
-
-    # 存储
-    if save:
-        storage.save(result)
+    result = await crawl(
+        url,
+        save=save,
+        no_cache=no_cache,
+        fetch_config=fc,
+        screenshot=screenshot,
+    )
 
     # 选择输出格式
     if format == "html":
@@ -117,7 +76,6 @@ async def _do_scrape(
     elif format == "fit":
         content = result.fit_markdown or result.markdown
     elif format == "text":
-        import re
         content = re.sub(r'!?\[([^\]]*)\]\([^)]+\)', r'\1', result.markdown)
         content = re.sub(r'[#*_`~]', '', content)
     else:
@@ -126,7 +84,7 @@ async def _do_scrape(
     if max_chars > 0 and len(content) > max_chars:
         content = content[:max_chars] + f"\n\n... (截断于 {max_chars} 字符)"
 
-    return {
+    out: dict[str, Any] = {
         "url": result.url,
         "title": result.title,
         "content": content,
@@ -135,6 +93,14 @@ async def _do_scrape(
         "char_count": len(content),
         "duration_ms": result.duration_ms,
     }
+
+    # 截图
+    if screenshot and result.screenshot:
+        import base64
+        out["screenshot_base64"] = base64.b64encode(result.screenshot).decode()
+        out["screenshot_bytes"] = len(result.screenshot)
+
+    return out
 
 
 def create_server() -> Server:
@@ -289,6 +255,7 @@ def create_server() -> Server:
                         )
                         results.append(r)
                     except Exception as e:
+                        logger.warning("batch scrape failed for %s: %s", url, e)
                         results.append({
                             "url": url,
                             "status": "failed",
@@ -314,7 +281,6 @@ def create_server() -> Server:
                 else:
                     rows = storage.recent(limit=arguments.get("limit", 10))
 
-                # 精简输出（不返回完整内容）
                 summary = []
                 for r in rows:
                     summary.append({
@@ -335,27 +301,16 @@ def create_server() -> Server:
                 url = arguments["url"]
                 wait = arguments.get("wait", 1)
                 result = await _do_scrape(
-                    url=url, format="markdown", wait=wait, save=False,
+                    url=url, format="fit", wait=wait,
+                    save=False, screenshot=True,
                 )
-                # 截图需要单独处理
-                fc = FetchConfig(
-                    proxy=_config.proxy if _config.use_proxy else None,
-                    timeout=_config.timeout,
-                    stealth=_config.stealth,
-                    headless=True,
-                    wait=wait,
-                )
-                crawl4ai, _ = await _get_engines()
-                r = await crawl4ai.fetch(url, fc)
-                if r.screenshot:
-                    import base64
-                    b64 = base64.b64encode(r.screenshot).decode()
+                if result.get("screenshot_base64"):
                     return [TextContent(
                         type="text",
                         text=json.dumps({
                             "url": url,
-                            "screenshot_base64": b64,
-                            "size_bytes": len(r.screenshot),
+                            "screenshot_base64": result["screenshot_base64"],
+                            "size_bytes": result.get("screenshot_bytes", 0),
                         }),
                     )]
                 return [TextContent(
@@ -370,6 +325,7 @@ def create_server() -> Server:
                 )]
 
         except Exception as e:
+            logger.error("tool %s failed: %s", name, e, exc_info=True)
             return [TextContent(
                 type="text",
                 text=json.dumps({"error": str(e)}, ensure_ascii=False),
@@ -385,6 +341,5 @@ async def main():
         await server.run(read_stream, write_stream, server.create_initialization_options())
 
 
-# 支持 python3 -m spider.mcp.server 启动
 if __name__ == "__main__":
     asyncio.run(main())

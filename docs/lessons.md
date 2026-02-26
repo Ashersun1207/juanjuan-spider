@@ -52,6 +52,22 @@
 **效果**：BBC 文章页 raw 3.6K → fit 2.8K 纯正文；PG Essay 67K 近乎全保留
 **教训**：正文提取是已解决问题，不要自己造轮子。regex adapter 适合做精调，不适合做主力提取
 
+## L9: MCP server 不能独立实现管道（2026-02-26）
+
+**现象**：MCP `_do_scrape` 自己写了路由+引擎+adapter，导致 trafilatura/adapter 全部失效，和 CLI 是两套代码
+**原因**：MCP server 最初独立写，没调用 `main.crawl()`
+**教训**：任何入口（CLI/MCP/API）都必须调同一个核心函数，不能各自实现管道
+
+## L10: 引擎不应每次 fetch 重建浏览器（2026-02-26）
+
+**现象**：`_ensure_crawler` 每次调用都无条件关闭+重建，批量抓取 N 个 URL = 启动 N 次 Chromium
+**教训**：引擎实例应检测配置变化再重建，相同配置复用同一浏览器
+
+## L11: customize_config 不能 mutate 传入对象（2026-02-26）
+
+**现象**：adapter.customize_config(fc) 直接改 fc 字段，调用方的 config 被污染
+**教训**：用 dataclasses.replace() 创建新对象，保持不可变性
+
 ---
 
 _Last updated: 2026-02-26_

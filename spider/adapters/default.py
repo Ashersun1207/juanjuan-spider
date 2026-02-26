@@ -41,19 +41,22 @@ class DefaultAdapter:
 
     def customize_config(self, config: FetchConfig) -> FetchConfig:
         """
-        根据适配器配置修改 FetchConfig。
+        根据适配器配置创建新的 FetchConfig（不 mutate 原对象）。
 
         子类可覆盖此方法做更复杂的配置调整。
         """
+        from dataclasses import replace
+
+        updates: dict = {}
         if self.css_selector:
-            config.selector = self.css_selector
+            updates["selector"] = self.css_selector
         if self.js_code:
-            config.js_code = self.js_code
+            updates["js_code"] = self.js_code
         if self.scroll:
-            config.scroll = True
+            updates["scroll"] = True
         if self.extra_wait > 0:
-            config.wait = max(config.wait, self.extra_wait)
-        return config
+            updates["wait"] = max(config.wait, self.extra_wait)
+        return replace(config, **updates) if updates else config
 
     def transform(self, result: CrawlResult) -> CrawlResult:
         """

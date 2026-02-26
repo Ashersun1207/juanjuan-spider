@@ -134,6 +134,32 @@
 **理由**：这是 bug，不是 feature。fit_markdown 应该由引擎或 Extractor 产生
 **影响**：4 个 adapter 文件修改
 
+## D13: MCP server 调用 main.crawl() 而非自实现管道（2026-02-26）
+
+**背景**：MCP `_do_scrape` 独立实现了路由+引擎+adapter，和 `main.crawl()` 并行，extractor/adapter 全部失效
+**决策**：MCP server 直接调用 `main.crawl()`，不重复管道逻辑
+**理由**：单一真相源，管道改动自动同步到 MCP，不存在漂移
+**影响**：`spider/mcp/server.py` 大幅简化（390→250行）
+
+## D14: 适配器注册表模块级缓存（2026-02-26）
+
+**背景**：每次 `crawl()` 调用都 import + 实例化 16 个 adapter
+**决策**：`_get_adapters()` 惰性加载，模块级全局缓存
+**理由**：避免重复 import 开销，adapter 实例无状态可安全复用
+**影响**：`spider/main.py` 新增 `_adapter_registry`
+
+## D15: HN 从 STATIC_SAFE 移到 BROWSER_REQUIRED（2026-02-26）
+
+**背景**：HN 是 table 布局，HTTP+markdownify 只能出 14 字符
+**决策**：移入 BROWSER_REQUIRED，走 Crawl4AI
+**影响**：路由测试同步更新
+
+## D16: Wikipedia/paulgraham 加入 STATIC_SAFE（2026-02-26）
+
+**背景**：两者都是纯静态，白白启动浏览器
+**决策**：加入 STATIC_SAFE，Wikipedia 同时保留在 NO_PROXY
+**影响**：router.py 更新
+
 ---
 
 _Last updated: 2026-02-26_

@@ -114,6 +114,33 @@ while IFS= read -r pkg; do
     fi
 done < <(grep -v "^#" requirements.txt | grep -v "^$")
 
+# ── V6b: Lint ──
+section "V6b: Lint (ruff)"
+if .venv/bin/python3 -c "import ruff" 2>/dev/null || .venv/bin/ruff --version 2>/dev/null; then
+    RUFF_OUT=$(.venv/bin/ruff check spider/ scrape.py 2>&1)
+    RUFF_ERRORS=$(echo "$RUFF_OUT" | grep -c "^spider/\|^scrape.py" || true)
+    if [ "$RUFF_ERRORS" -eq 0 ]; then
+        pass "ruff: 0 issues"
+    else
+        echo "$RUFF_OUT" | head -20
+        warn "ruff: ${RUFF_ERRORS} issues（不阻断，但建议修复）"
+    fi
+else
+    warn "ruff 未安装，跳过 lint（pip install ruff）"
+fi
+
+# ── V6c: Type check 入口验证 ──
+section "V6c: 关键类型检查"
+TYPE_ERRORS=0
+for mod in "spider.core.result" "spider.core.engine" "spider.core.extractor" "spider.core.router" "spider.main"; do
+    if .venv/bin/python3 -c "import ${mod}" 2>/dev/null; then
+        pass "$mod"
+    else
+        fail "$mod 导入失败"
+        TYPE_ERRORS=$((TYPE_ERRORS+1))
+    fi
+done
+
 # ── V7: decisions.md 完整性 ──
 section "V7: 决策记录"
 DECISION_COUNT=$(grep -c "^## D[0-9]" docs/decisions.md 2>/dev/null || echo "0")

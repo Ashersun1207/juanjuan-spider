@@ -6,8 +6,13 @@ juanjuan-spider 🕷️ — 通用网页爬取工具。
     result = await crawl("https://example.com")
 """
 
+import logging
+
 from spider.core.result import CrawlResult
 from spider.main import crawl
 
 __all__ = ["crawl", "CrawlResult"]
 __version__ = "0.5.0"
+
+# 默认 NullHandler — 调用方决定日志配置
+logging.getLogger("spider").addHandler(logging.NullHandler())

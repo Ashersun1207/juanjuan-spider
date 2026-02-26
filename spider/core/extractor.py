@@ -7,9 +7,12 @@
 
 from __future__ import annotations
 
+import logging
 import re
 
 from spider.core.result import CrawlResult
+
+logger = logging.getLogger("spider.extractor")
 
 
 class ContentExtractor:
@@ -24,10 +27,18 @@ class ContentExtractor:
     """
 
     def extract(self, result: CrawlResult) -> CrawlResult:
-        """对抓取结果做正文提取。"""
+        """对抓取结果做正文提取。失败时静默降级，不影响主流程。"""
         if not result.html or result.status == "failed":
             return result
 
+        try:
+            return self._do_extract(result)
+        except Exception as e:
+            logger.warning("trafilatura extraction failed for %s: %s", result.url, e)
+            return result  # 降级：保留引擎原始结果
+
+    def _do_extract(self, result: CrawlResult) -> CrawlResult:
+        """实际提取逻辑（可抛异常）。"""
         import trafilatura
 
         # 1. trafilatura 提取正文（markdown 格式）

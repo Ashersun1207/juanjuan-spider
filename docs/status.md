@@ -37,7 +37,7 @@ juanjuan-spider/
 │   │   └── __main__.py    # python3 -m spider.mcp 启动
 │   └── infra/
 │       └── config.py      # SpiderConfig (pydantic-settings，SPIDER_ 前缀)
-├── tests/                 # 58 tests，全绿
+├── tests/                 # 59 tests，全绿
 │   ├── test_result.py     # CrawlResult 模型（10 tests）
 │   ├── test_router.py     # Router 路由逻辑（10 tests）
 │   ├── test_storage.py    # SQLite CRUD + 缓存（16 tests）

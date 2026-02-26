@@ -6,6 +6,7 @@ HTTP 轻量引擎 — 用于不需要 JS 渲染的静态页面。
 
 from __future__ import annotations
 
+import logging
 import re
 import time
 
@@ -14,6 +15,8 @@ from markdownify import markdownify
 
 from spider.core.engine import BaseEngine, FetchConfig
 from spider.core.result import CrawlResult
+
+logger = logging.getLogger("spider.http")
 
 
 class HttpEngine(BaseEngine):

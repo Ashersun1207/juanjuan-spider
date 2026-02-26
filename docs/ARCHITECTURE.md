@@ -206,8 +206,7 @@ juanjuan-spider/
 │   │   ├── server.py      # MCP Server（4 tools）
 │   │   └── __main__.py    # python3 -m spider.mcp 启动
 │   └── infra/
-│       ├── session.py     # 登录态管理
-│       ├── proxy.py       # 代理管理
+│       # session.py / proxy.py — 规划中 (P2)
 │       └── config.py      # SpiderConfig (pydantic-settings)
 │
 ├── storage/               # 运行时数据（gitignore）

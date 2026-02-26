@@ -37,19 +37,27 @@ class Router:
         "wsj.com", "ft.com",
         # 科技
         "techcrunch.com", "theverge.com",
+        # 社区（table 布局，markdownify 无法处理）
+        "news.ycombinator.com",
     }
 
     # 已知纯静态、不需要浏览器的域名
     STATIC_SAFE: set[str] = {
-        "news.ycombinator.com",
         "raw.githubusercontent.com",
         "arxiv.org",
         "docs.python.org",
+        "paulgraham.com",       # 纯静态博客
+        "wikipedia.org",        # 纯静态，NO_PROXY 直连
+        "en.wikipedia.org",
+        "zh.wikipedia.org",
+        # news.ycombinator.com 移出：table 布局 markdownify 无法处理，走 Crawl4AI 更好
     }
 
     # 这些站点通过代理会被封，需要直连
     NO_PROXY: set[str] = {
         "wikipedia.org",
+        "en.wikipedia.org",
+        "zh.wikipedia.org",
     }
 
     def __init__(

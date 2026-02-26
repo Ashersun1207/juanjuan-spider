@@ -24,13 +24,23 @@ def test_default_route():
 
 
 def test_static_site_uses_http():
-    """已知静态站点使用 HTTP 引擎。"""
+    """arxiv 是纯静态，应该走 HTTP 引擎。"""
+    crawl4ai = _make_engine("crawl4ai")
+    http = _make_engine("http")
+    router = Router(default_engine=crawl4ai, http_engine=http)
+
+    engine, _ = router.route("https://arxiv.org/abs/2301.07041")
+    assert engine.name == "http"
+
+
+def test_hn_uses_crawl4ai():
+    """HN 是 table 布局，markdownify 无法处理，应走 Crawl4AI。"""
     crawl4ai = _make_engine("crawl4ai")
     http = _make_engine("http")
     router = Router(default_engine=crawl4ai, http_engine=http)
 
     engine, _ = router.route("https://news.ycombinator.com/")
-    assert engine.name == "http"
+    assert engine.name == "crawl4ai"
 
 
 def test_arxiv_uses_http():

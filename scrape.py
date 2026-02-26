@@ -27,6 +27,7 @@ juanjuan-spider CLI 🕷️
 
 import argparse
 import asyncio
+import logging
 import os
 import re
 import sys
@@ -138,7 +139,12 @@ async def run(args):
 
 def main():
     args = parse_args()
-    if not args.verbose:
+    if args.verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s %(name)s %(levelname)s %(message)s",
+        )
+    else:
         os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
     asyncio.run(run(args))
 
