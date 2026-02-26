@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-通用网页抓取工具 — Playwright + Stealth
+通用网页抓取工具 — Playwright + Stealth + Readability
 用法:
   python3 scrape.py <URL> [选项]
 
@@ -11,11 +11,13 @@
   --selector CSS     只抓取匹配的 CSS 选择器内容
   --output FILE      输出到文件（默认 stdout）
   --format FMT       输出格式: markdown(默认) / html / text / screenshot
+  --raw              跳过 readability 提取，输出原始页面内容
   --scroll           自动滚动到底部（加载懒加载内容）
-  --headless         无头模式（默认，不显示浏览器）
   --headed           有头模式（调试用，显示浏览器）
   --cookie FILE      加载 cookie JSON 文件
   --js CODE          页面加载后执行的 JS 代码
+  --max-chars N      输出最大字符数（截断）
+  --timeout SEC      页面加载超时秒数（默认 30）
 """
 
 import argparse
@@ -28,7 +30,13 @@ from playwright.sync_api import sync_playwright
 from playwright_stealth import Stealth
 from markdownify import markdownify as md
 
-# stealth 实例
+# readability
+try:
+    from readability import Document as ReadabilityDocument
+    HAS_READABILITY = True
+except ImportError:
+    HAS_READABILITY = False
+
 _stealth = Stealth()
 
 
@@ -43,10 +51,14 @@ def parse_args():
     p.add_argument("--format", "-f", default="markdown",
                    choices=["markdown", "html", "text", "screenshot"],
                    help="输出格式")
+    p.add_argument("--raw", action="store_true",
+                   help="跳过 readability，输出原始内容")
     p.add_argument("--scroll", action="store_true", help="自动滚动加载")
-    p.add_argument("--headed", action="store_true", help="有头模式（显示浏览器）")
+    p.add_argument("--headed", action="store_true", help="有头模式")
     p.add_argument("--cookie", help="Cookie JSON 文件路径")
     p.add_argument("--js", help="页面加载后执行的 JS")
+    p.add_argument("--max-chars", type=int, default=0,
+                   help="输出最大字符数（0=不限）")
     p.add_argument("--timeout", type=int, default=30, help="页面加载超时秒数")
     return p.parse_args()
 
@@ -71,14 +83,48 @@ def auto_scroll(page):
     """)
 
 
+def extract_with_readability(html, url=""):
+    """用 readability 提取正文，去掉导航/广告/脚本"""
+    if not HAS_READABILITY:
+        return html
+    try:
+        doc = ReadabilityDocument(html, url=url)
+        return doc.summary()
+    except Exception:
+        return html
+
+
+def clean_markdown(text):
+    """清理 markdown 输出：去多余空行、去残留 CSS/JS 片段"""
+    lines = text.split("\n")
+    cleaned = []
+    blank_count = 0
+    for line in lines:
+        stripped = line.strip()
+        # 跳过明显的 CSS/JS 残留
+        if any(kw in stripped for kw in [
+            "googletag", "function()", "window.", "var ", "const ",
+            "let ", ".push(", "border:", "margin:", "padding:",
+            "font-", "background:", "display:", "position:",
+            "overflow:", "rgba(", "progid:", "webkit", "-ms-",
+            "-moz-", "sentinel{", "jqstooltip", ".css",
+        ]):
+            continue
+        if stripped == "":
+            blank_count += 1
+            if blank_count <= 1:
+                cleaned.append("")
+        else:
+            blank_count = 0
+            cleaned.append(line)
+    return "\n".join(cleaned).strip()
+
+
 def main():
     args = parse_args()
 
     with sync_playwright() as p:
-        # 浏览器启动参数
-        launch_opts = {
-            "headless": not args.headed,
-        }
+        launch_opts = {"headless": not args.headed}
         if not args.no_proxy:
             launch_opts["proxy"] = {"server": args.proxy}
 
@@ -92,7 +138,6 @@ def main():
             timezone_id="Asia/Shanghai",
         )
 
-        # 加载 cookie
         if args.cookie:
             cookie_path = Path(args.cookie)
             if cookie_path.exists():
@@ -100,14 +145,13 @@ def main():
                 context.add_cookies(cookies)
 
         page = context.new_page()
-        _stealth.apply_stealth_sync(page)  # 注入反检测
+        _stealth.apply_stealth_sync(page)
 
-        # 导航
+        # 导航（networkidle 优先，超时降级 domcontentloaded）
         try:
             page.goto(args.url, timeout=args.timeout * 1000,
                       wait_until="networkidle")
-        except Exception as e:
-            # networkidle 超时时降级尝试
+        except Exception:
             try:
                 page.goto(args.url, timeout=args.timeout * 1000,
                           wait_until="domcontentloaded")
@@ -116,21 +160,18 @@ def main():
                 browser.close()
                 sys.exit(1)
 
-        # 额外等待
         if args.wait > 0:
             time.sleep(args.wait)
 
-        # 执行自定义 JS
         if args.js:
             page.evaluate(args.js)
             time.sleep(1)
 
-        # 自动滚动
         if args.scroll:
             auto_scroll(page)
             time.sleep(2)
 
-        # 截图模式
+        # 截图
         if args.format == "screenshot":
             out_path = args.output or "screenshot.png"
             page.screenshot(path=out_path, full_page=True)
@@ -138,67 +179,38 @@ def main():
             browser.close()
             return
 
-        # 获取内容
+        # 获取 HTML
         if args.selector:
             elements = page.query_selector_all(args.selector)
-            html_parts = [el.inner_html() for el in elements]
-            html = "\n".join(html_parts)
+            html = "\n".join(el.inner_html() for el in elements)
         else:
-            # 尝试智能提取主内容区域，去掉导航/广告/脚本
-            main_selectors = [
-                "main", "article", "#content", ".content",
-                "#main-content", ".main-content", "[role='main']"
-            ]
-            html = None
-            for sel in main_selectors:
-                el = page.query_selector(sel)
-                if el:
-                    html = el.inner_html()
-                    break
-            if not html:
-                # fallback: 抓 body 但去掉 script/style/nav/header/footer
-                html = page.evaluate("""() => {
-                    const clone = document.body.cloneNode(true);
-                    clone.querySelectorAll(
-                        'script, style, noscript, nav, header, footer, ' +
-                        '.nav, .navbar, .sidebar, .ad, .ads, .advertisement, ' +
-                        '[role="navigation"], [role="banner"]'
-                    ).forEach(el => el.remove());
-                    return clone.innerHTML;
-                }""")
+            html = page.content()
 
         browser.close()
 
-        # 格式化输出
+        # readability 正文提取（除非 --raw 或 --selector）
+        if not args.raw and not args.selector and HAS_READABILITY:
+            html = extract_with_readability(html, url=args.url)
+
+        # 格式化
         if args.format == "html":
             result = html
         elif args.format == "text":
-            # 简单去标签
-            from markdownify import markdownify
-            result = markdownify(html, strip=["img", "script", "style"])
-            # 去除多余空行
-            lines = [l.strip() for l in result.split("\n")]
-            result = "\n".join(l for l in lines if l)
+            result = md(html, strip=["img", "script", "style"])
+            result = clean_markdown(result)
         else:  # markdown
             result = md(html, strip=["script", "style"])
-            # 清理多余空行
-            lines = result.split("\n")
-            cleaned = []
-            blank_count = 0
-            for line in lines:
-                if line.strip() == "":
-                    blank_count += 1
-                    if blank_count <= 2:
-                        cleaned.append("")
-                else:
-                    blank_count = 0
-                    cleaned.append(line)
-            result = "\n".join(cleaned)
+            result = clean_markdown(result)
+
+        # 截断
+        if args.max_chars > 0 and len(result) > args.max_chars:
+            result = result[:args.max_chars] + "\n\n... (截断于 %d 字符)" % args.max_chars
 
         # 输出
         if args.output:
             Path(args.output).write_text(result, encoding="utf-8")
-            print(f"✅ 已保存: {args.output}", file=sys.stderr)
+            print(f"✅ 已保存: {args.output} ({len(result)} 字符)",
+                  file=sys.stderr)
         else:
             print(result)
 
