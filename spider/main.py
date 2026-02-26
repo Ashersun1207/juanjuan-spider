@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from spider.core.engine import FetchConfig
+from spider.core.extractor import ContentExtractor
 from spider.core.result import CrawlResult
 from spider.core.router import Router
 from spider.engines.crawl4ai_engine import Crawl4AIEngine
@@ -111,7 +112,11 @@ async def crawl(
         await crawl4ai.close()
         await http.close()
 
-    # 适配器后处理
+    # 内容提取（trafilatura 正文提取 + 质量择优）
+    extractor = ContentExtractor()
+    result = extractor.extract(result)
+
+    # 适配器后处理（站点特有精调）
     result = adapter.transform(result)
 
     # 存储
