@@ -188,7 +188,10 @@ juanjuan-spider/
 │   │   └── http_engine.py      # httpx 轻量引擎（静态页面）
 │   ├── adapters/
 │   │   ├── default.py     # DefaultAdapter 基类（可子类化）
-│   │   └── news.py        # BBC / CNBC / Reuters / 金十 适配器
+│   │   ├── news.py        # BBC / CNBC / Reuters / 金十
+│   │   ├── social.py      # Reddit / X / Medium / YouTube
+│   │   ├── finance.py     # Investing / Yahoo Finance / Myfxbook / Bloomberg / WSJ / FT
+│   │   └── tech.py        # TechCrunch / The Verge / Wikipedia / HN
 │   ├── storage/
 │   │   └── sqlite.py      # SQLite 元数据 + pages/ 文件双写
 │   ├── mcp/
