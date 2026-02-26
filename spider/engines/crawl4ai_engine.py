@@ -54,6 +54,17 @@ class Crawl4AIEngine(BaseEngine):
         run_kwargs: dict = {
             "page_timeout": cfg.timeout * 1000,
             "verbose": cfg.verbose,
+            # 去噪：排除导航、页脚、侧边栏等非正文元素
+            "excluded_tags": ["nav", "footer", "header", "aside", "noscript"],
+            "excluded_selector": ",".join([
+                "nav", "footer", "header", "aside",
+                "[role='navigation']", "[role='banner']", "[role='contentinfo']",
+                ".nav", ".navbar", ".menu", ".sidebar", ".footer",
+                ".cookie-banner", ".ad", ".advertisement",
+                "#cookie-consent", "#nav", "#footer", "#sidebar",
+            ]),
+            "remove_overlay_elements": True,
+            "exclude_external_images": True,
         }
         if cfg.selector:
             run_kwargs["css_selector"] = cfg.selector

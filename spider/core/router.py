@@ -32,6 +32,10 @@ class Router:
         "bloomberg.com",
         "investing.com",
         "jin10.com",
+        "bbc.com",
+        "bbc.co.uk",
+        "cnbc.com",
+        "reuters.com",
     }
 
     # 已知纯静态、不需要浏览器的域名

@@ -71,6 +71,13 @@ async def crawl(
     http = HttpEngine()
     router = Router(default_engine=crawl4ai, http_engine=http)
 
+    # 注册站点适配器
+    from spider.adapters.news import BBCAdapter, CNBCAdapter, ReutersAdapter, Jin10Adapter
+    for adapter_cls in [BBCAdapter, CNBCAdapter, ReutersAdapter, Jin10Adapter]:
+        a = adapter_cls()
+        for domain in a.domains:
+            router.register_adapter(domain, a)
+
     engine, adapter = router.route(url)
 
     # 适配器定制配置
