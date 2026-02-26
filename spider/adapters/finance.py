@@ -24,7 +24,7 @@ class InvestingAdapter(DefaultAdapter):
         md = re.sub(r"(?:Download the App|Install|Sign In|Join for free)[^\n]*\n?", "", md)
         md = re.sub(r"(?:Advertisement|Advertise)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -39,7 +39,7 @@ class YahooFinanceAdapter(DefaultAdapter):
         md = result.markdown
         md = re.sub(r"(?:Sign in|Try the app|Get the app|Yahoo Finance Plus)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -54,7 +54,7 @@ class MyfxbookAdapter(DefaultAdapter):
         md = result.markdown
         md = re.sub(r"(?:Join|Login|Register|Sign Up|Free Sign Up)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -79,7 +79,7 @@ class BloombergAdapter(DefaultAdapter):
             })
         md = re.sub(r"(?:Subscribe|Sign In|Already a subscriber)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -103,7 +103,7 @@ class WSJAdapter(DefaultAdapter):
             })
         md = re.sub(r"(?:Subscribe|Sign In|Already a member)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -118,4 +118,4 @@ class FTAdapter(DefaultAdapter):
         md = result.markdown
         md = re.sub(r"(?:Subscribe|Sign In|Already a subscriber|Try for \$1)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})

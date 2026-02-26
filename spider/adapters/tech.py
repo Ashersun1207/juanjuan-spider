@@ -23,7 +23,7 @@ class TechCrunchAdapter(DefaultAdapter):
         md = re.sub(r"(?:Log in|Sign up|Newsletter|Subscribe)[^\n]*\n?", "", md)
         md = re.sub(r"(?:© 20\d\d TechCrunch)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -37,7 +37,7 @@ class TheVergeAdapter(DefaultAdapter):
         md = result.markdown
         md = re.sub(r"(?:The Verge homepage|Site search|Filed under)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -59,19 +59,36 @@ class WikipediaAdapter(DefaultAdapter):
         # 去掉导航
         md = re.sub(r"(?:From Wikipedia|Jump to navigation|Jump to search)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
 class HackerNewsAdapter(DefaultAdapter):
-    """Hacker News 适配器。"""
+    """
+    Hacker News 适配器。
+
+    HN 的 HTML 是嵌套 table 布局，markdownify 转换出大量管道符残骸。
+    清洗策略：删表格标记 → 提取 "标题 (来源) / N points / N comments" 结构。
+    更好方案：Phase B 用 HN API (/v0/topstories.json)。
+    """
     name: str = "hackernews"
     domains: list[str] = field(default_factory=lambda: ["news.ycombinator.com"])
 
     def transform(self, result: CrawlResult) -> CrawlResult:
         md = result.markdown
-        # HN 的表格结构转换比较乱，尝试清理
-        md = re.sub(r"\| *\| *\| *\| *\|", "", md)
-        md = re.sub(r"\| *-+ *\| *-+ *\| *-+ *\| *-+ *\|", "", md)
+        # 删除所有表格管道符和分隔行
+        md = re.sub(r"\|[^\n]*\|", "", md)
+        md = re.sub(r"^\s*-+\s*$", "", md, flags=re.MULTILINE)
+        # 删空链接和残留 UI 文本
+        md = re.sub(r"\[hide\]\([^\)]+\)", "", md)
+        md = re.sub(r"\[login\]\([^\)]+\)", "", md)
+        md = re.sub(r"\[More\]\([^\)]+\)", "", md)
+        md = re.sub(r"\d+\.\s*$", "", md, flags=re.MULTILINE)  # 孤立序号
+        # 合并连续空行
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        if not md or len(md) < 200:
+            return result.model_copy(update={
+                "markdown": md,
+                "metadata": {**result.metadata, "hint": "HN 表格布局清洗后内容较少，建议用 API: https://hacker-news.firebaseio.com/v0/topstories.json"},
+            })
+        return result.model_copy(update={"markdown": md})

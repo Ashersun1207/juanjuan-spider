@@ -57,10 +57,24 @@ class Crawl4AIEngine(BaseEngine):
             # 去噪：排除导航、页脚、侧边栏等非正文元素
             "excluded_tags": ["nav", "footer", "header", "aside", "noscript"],
             "excluded_selector": ",".join([
+                # 导航 & 页头页脚
                 "[role='navigation']", "[role='banner']", "[role='contentinfo']",
                 ".navbar", ".menu-bar", ".site-footer", ".cookie-banner",
+                # 广告 & Cookie
                 ".advertisement", "#cookie-consent", "#cookie-banner",
                 "[class*='cookie']", "[id*='cookie']",
+                "[class*='advert']", "[class*='sponsor']",
+                # 侧边栏
+                ".sidebar", "[role='complementary']", "aside",
+                # 社交 & 分享
+                ".social-share", ".share-buttons", "[class*='share']",
+                # 推荐 & 订阅
+                ".related-articles", ".recommended", "[class*='related']",
+                ".newsletter-signup", ".subscribe-form",
+                # 弹窗
+                "[class*='popup']", "[class*='modal']", "[class*='overlay']",
+                # 跳转链接
+                "[class*='skip-to']", ".skip-navigation",
             ]),
             "remove_overlay_elements": True,
             "exclude_external_images": True,

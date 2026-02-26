@@ -29,7 +29,7 @@ class BBCAdapter(DefaultAdapter):
         md = re.sub(r"(?:^|\n)\s*\[(?:Home|News|Sport|Business|Technology|Health|Culture|Arts|Travel|Earth|Audio|Video|Live|Weather|Newsletters)\]\([^\)]+\)\s*\n?", "\n", md)
         # 合并连续空行
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -45,7 +45,7 @@ class CNBCAdapter(DefaultAdapter):
         # 去掉 Skip Navigation 等
         md = re.sub(r"\[Skip Navigation\][^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -59,7 +59,7 @@ class ReutersAdapter(DefaultAdapter):
     def transform(self, result: CrawlResult) -> CrawlResult:
         md = result.markdown
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -75,4 +75,4 @@ class Jin10Adapter(DefaultAdapter):
         # 去掉广告和弹窗文本
         md = re.sub(r"(?:下载APP|扫码下载|开通VIP|免费试用)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})

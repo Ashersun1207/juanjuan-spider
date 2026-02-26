@@ -40,7 +40,7 @@ class RedditAdapter(DefaultAdapter):
         md = re.sub(r"(?:Get the Reddit app|Log In|Sign Up|Get app)[^\n]*\n?", "", md)
         md = re.sub(r"(?:Share|Save|Hide|Report|More)\s*\n", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
@@ -84,7 +84,7 @@ class MediumAdapter(DefaultAdapter):
         md = re.sub(r"(?:Open in app|Sign up|Sign in|Member-only story|Get started)[^\n]*\n?", "", md)
         md = re.sub(r"(?:Follow|Clap|Share|Listen)[^\n]*\n?", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
-        return result.model_copy(update={"markdown": md, "fit_markdown": md})
+        return result.model_copy(update={"markdown": md})
 
 
 @dataclass
