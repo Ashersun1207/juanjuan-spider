@@ -168,59 +168,60 @@ class CrawlResult:
 | **Cache** | 结果缓存（SQLite），避免重复抓取 | Crawl4AI 缓存 |
 | **Config** | YAML 配置 + 环境变量 | — |
 
-## 目录结构
+## 目录结构（v0.4 实际）
 
 ```
 juanjuan-spider/
-├── scrape.py              # CLI 入口
-├── server.py              # MCP Server 入口
-├── requirements.txt
-├── config.yaml            # 配置文件
+├── scrape.py              # CLI 入口（向后兼容 + --save / --no-cache）
+├── requirements.txt       # 生产依赖
+├── requirements-dev.txt   # 开发依赖
 │
 ├── spider/                # Python 包
-│   ├── __init__.py        # from spider import crawl
+│   ├── __init__.py        # from spider import crawl, CrawlResult
+│   ├── main.py            # crawl() 核心函数，串联 Router→Engine→Adapter→Storage
 │   ├── core/
-│   │   ├── router.py      # 路由器
-│   │   ├── engine.py      # 引擎基类
-│   │   └── result.py      # CrawlResult 数据模型
+│   │   ├── router.py      # URL → (Engine, Adapter) 路由
+│   │   ├── engine.py      # BaseEngine 抽象基类 + FetchConfig
+│   │   └── result.py      # CrawlResult Pydantic 数据模型
 │   ├── engines/
-│   │   ├── crawl4ai.py    # Crawl4AI 引擎
-│   │   └── http.py        # HTTP 轻量引擎
+│   │   ├── crawl4ai_engine.py  # Crawl4AI 浏览器渲染引擎（主力）
+│   │   └── http_engine.py      # httpx 轻量引擎（静态页面）
 │   ├── adapters/
-│   │   ├── default.py     # 通用适配器
-│   │   ├── zhihu.py
-│   │   ├── xhs.py
-│   │   ├── weibo.py
-│   │   └── reddit.py
-│   ├── output/
-│   │   ├── markdown.py
-│   │   ├── json.py
-│   │   └── screenshot.py
+│   │   ├── default.py     # DefaultAdapter 基类（可子类化）
+│   │   └── news.py        # BBC / CNBC / Reuters / 金十 适配器
+│   ├── storage/
+│   │   └── sqlite.py      # SQLite 元数据 + pages/ 文件双写
+│   ├── mcp/
+│   │   ├── server.py      # MCP Server（4 tools）
+│   │   └── __main__.py    # python3 -m spider.mcp 启动
 │   └── infra/
 │       ├── session.py     # 登录态管理
 │       ├── proxy.py       # 代理管理
-│       ├── cache.py       # 结果缓存
-│       └── config.py      # 配置加载
+│       └── config.py      # SpiderConfig (pydantic-settings)
 │
-├── mcp/                   # MCP 相关
-│   ├── server.py          # MCP Server 实现
-│   └── tools.py           # Tool 定义
+├── storage/               # 运行时数据（gitignore）
+│   ├── spider.db          # SQLite 元数据索引
+│   └── pages/YYYY-MM/     # markdown 文件（按月分目录）
 │
-├── docs/
 ├── scripts/
-└── tests/
+│   ├── project-boot.sh    # 新会话启动恢复
+│   ├── verify.sh          # commit 前验证（V1-V9）
+│   └── sync.sh            # 文档+memory 自动同步
+│
+├── tests/                 # pytest 测试
+├── docs/                  # 项目文档
+└── .venv/                 # Python 3.12 虚拟环境
 ```
 
 ## 演进路线
 
-| 阶段 | 做什么 | 架构影响 |
+| 阶段 | 做什么 | 状态 |
 |---|---|---|
-| **v0.3（当前）** | Crawl4AI 引擎 + CLI | 单文件，无分层 |
-| **v0.4** | 分层重构 + MCP Server | 建立 spider 包 + 接入层 |
-| **v0.5** | 站点适配器（知乎/小红书/微博） | 适配器层 |
-| **v0.6** | 登录态管理 + 代理管理 | 基础设施层 |
-| **v0.7** | 批量/深度爬取 | 引擎增强 |
-| **v1.0** | 稳定 API + 完整测试 | 可对外使用 |
+| **v0.1-v0.3** | Playwright → Crawl4AI 引擎 + CLI | ✅ 完成 |
+| **v0.4（当前）** | 分层重构 + SQLite 存储 + MCP Server + 适配器 + 去噪 | ✅ 完成 |
+| **v0.5** | 登录态管理 + Jina fallback + 更多适配器 | 待做 |
+| **v0.6** | 代理管理 + 批量/深度爬取 | 待做 |
+| **v1.0** | 稳定 API + 完整测试 + OpenClaw Skill | 待做 |
 
 ## 参考项目
 
