@@ -1,4 +1,4 @@
-# web-scraper 🕷️
+# juanjuan-spider 🕷️
 
 通用网页抓取工具 — 基于 **Crawl4AI** (58K+ ⭐)。
 
@@ -91,4 +91,4 @@ bash scripts/project-boot.sh
 
 ---
 
-_卷卷的万能爬虫_
+_juanjuan-spider · 卷卷的万能爬虫_

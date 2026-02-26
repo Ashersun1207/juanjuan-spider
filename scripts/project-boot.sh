@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-echo "=== web-scraper 项目状态 ==="
+echo "=== juanjuan-spider 项目状态 ==="
 echo ""
 
 echo "📁 项目位置: $(pwd)"
