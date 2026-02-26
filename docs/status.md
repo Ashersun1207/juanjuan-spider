@@ -27,7 +27,7 @@ _无_
 
 ### P1 — 近期
 - [ ] MCP Server 封装（Python MCP SDK）
-- [ ] 金融站点适配器（Myfxbook 表格 → JSON）
+- [ ] 站点适配器系统（可插拔，针对特定站点优化提取）
 - [ ] Cloudflare challenge 检测 + 自动重试
 - [ ] 批量 URL 输入（--urls file.txt）
 

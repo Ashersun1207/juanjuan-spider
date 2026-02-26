@@ -1,13 +1,13 @@
 # web-scraper — 架构文档
 
-_GainLab 生态的网页抓取能力，专注金融场景。_
+_卷卷的通用网页抓取工具，能力覆盖所有需要浏览器渲染的场景。_
 
 ---
 
 ## 定位
 
-GainLab Agent 的"眼睛"之一：FMP/EODHD 覆盖不到的数据，靠爬虫补齐。
-不做通用 SaaS 产品，专注内部使用 + 金融场景优化。
+通用爬虫工具，核心能力：反检测 + 智能正文提取 + 多格式输出。
+适用场景不限于金融——新闻、研报、论坛、产品页、文档站、任何需要绕反爬的网页。
 
 ## 技术栈
 
@@ -70,11 +70,13 @@ URL → Playwright (Stealth) → 原始 HTML
 ## 演进方向
 
 - **P1**：MCP Server 封装（Agent 原生调用）
-- **P1**：金融站点适配器（Myfxbook / Investing.com / 金十数据）
+- **P1**：站点适配器系统（针对特定站点优化提取逻辑）
+- **P1**：Cloudflare challenge 检测 + 重试
 - **P2**：批量 URL + 并发
-- **P2**：Cloudflare challenge 检测 + 重试
-- **P3**：登录态管理（浏览器 profile 复用）
-- **P3**：表格专用提取（→ JSON/CSV）
+- **P2**：登录态管理（浏览器 profile 复用）
+- **P2**：表格专用提取（→ JSON/CSV）
+- **P3**：OpenClaw Skill 封装
+- **P3**：页面变更监控（定期 diff 告警）
 
 ---
 

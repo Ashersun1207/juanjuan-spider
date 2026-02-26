@@ -1,8 +1,8 @@
 # web-scraper 🕷️
 
-GainLab 生态的网页抓取工具 — Playwright + Stealth + Readability。
+通用网页抓取工具 — Playwright + Stealth + Readability。
 
-专注金融场景：抓取 FMP/EODHD API 覆盖不到的数据（财经新闻、EA 实盘、研报正文）。
+反检测 + 智能正文提取，覆盖所有需要浏览器渲染的抓取场景：新闻、研报、论坛、产品页、金融数据、文档站。
 
 ## 安装
 
@@ -89,4 +89,4 @@ bash scripts/project-boot.sh
 
 ---
 
-_GainLab 生态 · 非独立产品_
+_卷卷的万能爬虫_
