@@ -33,13 +33,23 @@ def test_static_site_uses_http():
     assert engine.name == "http"
 
 
-def test_github_uses_http():
+def test_arxiv_uses_http():
+    crawl4ai = _make_engine("crawl4ai")
+    http = _make_engine("http")
+    router = Router(default_engine=crawl4ai, http_engine=http)
+
+    engine, _ = router.route("https://arxiv.org/abs/2301.07041")
+    assert engine.name == "http"
+
+
+def test_github_uses_default():
+    """GitHub 是 SPA，需要浏览器。"""
     crawl4ai = _make_engine("crawl4ai")
     http = _make_engine("http")
     router = Router(default_engine=crawl4ai, http_engine=http)
 
     engine, _ = router.route("https://github.com/apify/crawlee")
-    assert engine.name == "http"
+    assert engine.name == "crawl4ai"
 
 
 def test_dynamic_site_uses_default():

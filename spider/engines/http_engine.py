@@ -66,7 +66,7 @@ class HttpEngine(BaseEngine):
         html = resp.text
 
         # HTML → Markdown
-        raw_md = markdownify(html, heading_style="ATX", strip=["script", "style"])
+        raw_md = markdownify(html, heading_style="ATX", strip=["script", "style", "nav", "footer", "noscript", "svg"])
         # 简单清理：合并连续空行
         raw_md = re.sub(r"\n{3,}", "\n\n", raw_md).strip()
 

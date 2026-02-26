@@ -37,9 +37,10 @@ class Router:
     # 已知纯静态、不需要浏览器的域名
     STATIC_SAFE: set[str] = {
         "news.ycombinator.com",
-        "github.com",
         "raw.githubusercontent.com",
         "arxiv.org",
+        "docs.python.org",
+        "en.wikipedia.org",
     }
 
     def __init__(
