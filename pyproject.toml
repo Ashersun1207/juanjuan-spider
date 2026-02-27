@@ -45,5 +45,6 @@ ignore = [
 known-first-party = ["spider"]
 
 [tool.pytest.ini_options]
+pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "strict"
