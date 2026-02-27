@@ -9,8 +9,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    env:
-      PYTHONPATH: .
     
     steps:
       - uses: actions/checkout@v4
@@ -27,7 +25,8 @@ jobs:
           pip install pytest pytest-asyncio ruff
           
       - name: Run tests
-        run: pytest tests/ -v --tb=short
+        working-directory: .
+        run: PYTHONPATH=. pytest tests/ -v --tb=short
         
       - name: Run linter
         run: ruff check spider/ tests/
