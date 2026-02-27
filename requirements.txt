@@ -5,3 +5,5 @@ mcp>=1.0.0
 pydantic>=2.10.0
 pydantic-settings>=2.7.0
 trafilatura>=2.0.0
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
