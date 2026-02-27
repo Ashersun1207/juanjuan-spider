@@ -81,6 +81,8 @@ juanjuan-spider/
 | **trafilatura 提取层** | **v0.5** | **ContentExtractor — 正文提取+质量评分择优，自动补充元数据** |
 | **fit_markdown 修复** | **v0.5** | **adapter 不再覆盖 fit_markdown，保留引擎 Readability 结果** |
 | **excluded_selector 补全** | **v0.5** | **新增侧边栏/社交/推荐/弹窗/广告等 10+ 选择器** |
+| **CI/CD** | **v0.5.1** | **GitHub Actions（pytest + ruff）+ pre-commit hook** |
+| **CHANGELOG** | **v0.5.1** | **standard-version 自动生成** |
 
 ## 进行中
 
