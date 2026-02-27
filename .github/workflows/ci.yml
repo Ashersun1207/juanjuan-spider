@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       
+      - name: Debug directory
+        run: |
+          pwd
+          ls -la
+          cat pyproject.toml | head -5
+          
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -25,7 +31,6 @@ jobs:
           pip install pytest pytest-asyncio ruff
           
       - name: Run tests
-        working-directory: .
         run: PYTHONPATH=. pytest tests/ -v --tb=short
         
       - name: Run linter
