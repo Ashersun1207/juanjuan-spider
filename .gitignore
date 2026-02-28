@@ -7,3 +7,6 @@ storage/
 dist/
 build/
 .env
+node_modules/
+package-lock.json
+setup.py
