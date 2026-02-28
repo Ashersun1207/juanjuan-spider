@@ -39,12 +39,12 @@ def _get_adapters():
         YahooFinanceAdapter,
     )
     from spider.adapters.news import BBCAdapter, CNBCAdapter, Jin10Adapter, ReutersAdapter
-    from spider.adapters.social import MediumAdapter, RedditAdapter, TwitterAdapter, YouTubeAdapter
+    from spider.adapters.social import MediumAdapter, RedditAdapter, Trends24Adapter, TwitterAdapter, YouTubeAdapter
     from spider.adapters.tech import HackerNewsAdapter, TechCrunchAdapter, TheVergeAdapter, WikipediaAdapter
 
     _adapter_registry = [
         BBCAdapter(), CNBCAdapter(), ReutersAdapter(), Jin10Adapter(),
-        RedditAdapter(), TwitterAdapter(), MediumAdapter(), YouTubeAdapter(),
+        RedditAdapter(), Trends24Adapter(), TwitterAdapter(), MediumAdapter(), YouTubeAdapter(),
         InvestingAdapter(), YahooFinanceAdapter(), MyfxbookAdapter(),
         BloombergAdapter(), WSJAdapter(), FTAdapter(),
         TechCrunchAdapter(), TheVergeAdapter(), WikipediaAdapter(), HackerNewsAdapter(),

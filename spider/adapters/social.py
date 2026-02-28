@@ -1,5 +1,5 @@
 """
-社交/社区平台适配器 — Reddit / X(Twitter) / Medium / YouTube。
+社交/社区平台适配器 — Reddit / X(Twitter) / Medium / YouTube / Trends24。
 
 这些平台反爬严格，适配器主要做：
 1. 标记需要登录态
@@ -39,6 +39,30 @@ class RedditAdapter(DefaultAdapter):
         # 去掉 Reddit 的大量 UI 文本
         md = re.sub(r"(?:Get the Reddit app|Log In|Sign Up|Get app)[^\n]*\n?", "", md)
         md = re.sub(r"(?:Share|Save|Hide|Report|More)\s*\n", "", md)
+        md = re.sub(r"\n{3,}", "\n\n", md).strip()
+        return result.model_copy(update={"markdown": md})
+
+
+@dataclass
+class Trends24Adapter(DefaultAdapter):
+    """
+    Trends24.in 适配器 — 第三方 Twitter 趋势聚合。
+
+    抓取美国/全球 Twitter 趋势榜单，无需登录。
+    页面是静态 HTML，直接爬取即可。
+    """
+    name: str = "trends24"
+    domains: list[str] = field(default_factory=lambda: ["trends24.in"])
+    needs_login: bool = False
+    scroll: bool = False
+    extra_wait: float = 1
+
+    def transform(self, result: CrawlResult) -> CrawlResult:
+        """清洗 trends24 的输出，保留趋势名称和链接。"""
+        md = result.markdown
+        # 去掉页面标题和时间戳
+        md = re.sub(r"# .* Trends for last.*\n+", "", md)
+        md = re.sub(r"### \d+ .* ago\n+", "", md)
         md = re.sub(r"\n{3,}", "\n\n", md).strip()
         return result.model_copy(update={"markdown": md})
 
